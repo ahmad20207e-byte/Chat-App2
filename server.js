@@ -60,10 +60,25 @@ app.post("/api/register", limit, wrap(async (req, res) => {
       [username, bcrypt.hashSync(password, 10), Date.now()]);
     const u = { id: r.rows[0].id, username };
     res.json({ token: sign(u), user: u });
-  } catch (e) {
-    if (e.code === "23505") return res.status(409).json({ error: "اسم المستخدم مستخدم مسبقاً" });
-    throw e;
+} catch (e) {
+  console.error("REGISTER ERROR:", {
+    code: e.code,
+    constraint: e.constraint,
+    detail: e.detail,
+    message: e.message
+  });
+
+  if (
+    e.code === "23505" &&
+    e.constraint === "users_username_lower"
+  ) {
+    return res.status(409).json({
+      error: "اسم المستخدم مستخدم مسبقاً"
+    });
   }
+
+  throw e;
+}
 }));
 
 app.post("/api/login", limit, wrap(async (req, res) => {
